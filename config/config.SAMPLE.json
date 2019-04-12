@@ -1,4 +1,7 @@
 {
+    "general": {
+        "log_level": "INFO"
+    },
     "twitter_keys": {
         "screen_name": "DevMicrocosm",
         "consumer_key": "",
@@ -11,7 +14,8 @@
         "aggressive_management": false,
         "days_to_manage": [0],
         "inactivity_period": 14,
-        "max_unfollows": 300
+        "max_unfollows": 300,
+        "follow_back": true
     },
     "query_objects": [{
         "search_query": "#test1",
@@ -22,7 +26,8 @@
         "word_blacklist": ["RT", "♺"],
         "days_to_tweet": [1],
         "favourite_tweets": false,
-        "max_hashtags": 4
+        "max_hashtags": 4,
+        "must_include_media": false
     },
     {
         "search_query": "#test2",
@@ -33,6 +38,7 @@
         "word_blacklist": ["RT", "♺"],
         "days_to_tweet": [2, 4],
         "favourite_tweets": false,
-        "max_hashtags": 4
+        "max_hashtags": 4,
+        "must_include_media": false
     }]
 }

@@ -7,18 +7,31 @@ import tweepy
 import re
 import os
 
-def filtered_tweet_check(tweet, list_of_previous_tweet_ids, max_hashtags):
+def filtered_tweet_check(tweet, list_of_previous_tweet_ids, max_hashtags, only_with_media):
     """Filters out retweets, hashtag spamming tweets and @ mentions"""
 
-    find_hashtag_regex = r"(^|\B)#(?![0-9_]+\b)([a-zA-Z0-9_]{1,30})(\b|\r)"
+    #find_hashtag_regex = r"(^|\B)#(?![0-9_]+\b)([a-zA-Z0-9_]{1,30})(\b|\r)"
 
-    if not tweet.retweeted and '@' not in tweet.text and tweet.id not in list_of_previous_tweet_ids:
+    if only_with_media:
+        if 'media' in tweet.entities and len(tweet.entities['media']) < 1:
+            logging.info('No media')
+            return False
 
-        hashtags_in_tweet = re.finditer(find_hashtag_regex, tweet.text, re.MULTILINE)
-        number_of_hashtags_in_tweet = len(list(hashtags_in_tweet))
+    if not tweet.retweeted and tweet.id not in list_of_previous_tweet_ids:
+
+        #hashtags_in_tweet = re.finditer(find_hashtag_regex, tweet.text, re.MULTILINE)
+        #number_of_hashtags_in_tweet = len(list(hashtags_in_tweet))
+        
+        if 'hashtags' not in tweet.entities:
+            return True
+        
+        number_of_hashtags_in_tweet = len(tweet.entities['hashtags'])
 
         if number_of_hashtags_in_tweet < max_hashtags:
             return True
+        else:
+            logging.info("%d < %d" % (number_of_hashtags_in_tweet, max_hashtags));
+            return False
 
     return False
 
@@ -56,7 +69,7 @@ def retweet(api, query_objects):
 
         savepoint = get_hashtag_savepoint(query_object['search_query'])
         timeline_iterator = tweepy.Cursor(api.search, q=query_object['search_query'], since_id=savepoint,
-                                          lang=query_object['tweet_language'], ).items(query_object['tweet_limit'])
+                                          lang=query_object['tweet_language'], include_entities=True).items(query_object['tweet_limit'])
 
         timeline = []
         for status in timeline_iterator:
@@ -80,7 +93,7 @@ def retweet(api, query_objects):
 
         for status in timeline:
             try:
-                if filtered_tweet_check(status, list_of_previous_tweet_ids, query_object['max_hashtags']) is True:
+                if filtered_tweet_check(status, list_of_previous_tweet_ids, query_object['max_hashtags'], query_object['must_include_media']) is True:
                     print("(%(date)s) %(name)s: %(message)s\n" %
                           {"date": status.created_at,
                            "name": status.author.screen_name.encode('utf-8'),
@@ -92,6 +105,8 @@ def retweet(api, query_objects):
 
                     if query_object['favourite_tweets'] is True:
                         api.create_favorite(status.id)
+                else:
+                    logging.info("Ignoring tweet %d" % (status.id))
 
                 if query_object['follow_poster'] is True:
                     api.create_friendship(status.author.id)

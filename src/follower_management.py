@@ -15,7 +15,21 @@ def manage_followers(api, config):
             aggressive_management(api, config)
         else:
             passive_management(api, config)
+    
+    if config.follower_management['follow_back'] is True:
+        follow_back(api, config)
 
+def follow_back(api, config):
+    followers = set(api.followers_ids(config.twitter_keys['screen_name']))
+    following = set(api.friends_ids(config.twitter_keys['screen_name']))
+    not_following_back = [item for item in followers if item not in following]
+
+    for uid in not_following_back:
+        user = api.get_user(uid)
+        logging.Info("Following %d %s." % (uid, user.name))
+        api.create_friendship(uid, True)
+
+    print("Finished. %d followed." % len(not_following_back))
 
 def aggressive_management(api, config):
     """Aggressive management unfollows any followers until rate limit is hit that aren't following back"""
